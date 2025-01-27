@@ -12,16 +12,16 @@ class TachyonKinematics:
         self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n)) for n in 'xyuvz']
 
         # Setup endstops, steppers on toolhead gantry
-        for stepper in self.rails[1].get_steppers():
-            self.rails[0].get_endstops()[0][0].add_stepper(stepper)
-        for stepper in self.rails[0].get_steppers():
-            self.rails[1].get_endstops()[0][0].add_stepper(stepper)
+        for s in self.rails[1].get_steppers():
+            self.rails[0].get_endstops()[0][0].add_stepper(s)
+        for s in self.rails[0].get_steppers():
+            self.rails[1].get_endstops()[0][0].add_stepper(s)
 
         # Setup endstops, steppers on stabilization gantry
-        for stepper in self.rails[3].get_steppers():
-            self.rails[2].get_endstops()[0][0].add_stepper(stepper)
-        for stepper in self.rails[2].get_steppers():
-            self.rails[3].get_endstops()[0][0].add_stepper(stepper)
+        for s in self.rails[3].get_steppers():
+            self.rails[2].get_endstops()[0][0].add_stepper(s)
+        for s in self.rails[2].get_steppers():
+            self.rails[3].get_endstops()[0][0].add_stepper(s)
 
         # Pair kinematics with the appropriate steppers
         self.rails[0].setup_itersolve('tachyon_stepper_alloc', b'+') # main gantry + stepper
@@ -30,9 +30,9 @@ class TachyonKinematics:
         self.rails[3].setup_itersolve('tachyon_stepper_alloc', b'y') # stabilization gantry / stepper
         self.rails[4].setup_itersolve('cartesian_stepper_alloc', b'z') # z stepper
 
-        for stepper in self.get_steppers():
-            stepper.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(stepper.generate_steps)
+        for s in self.get_steppers():
+            s.set_trapq(toolhead.get_trapq())
+            toolhead.register_step_generator(s.generate_steps)
 
 
         # Setup boundary checks
