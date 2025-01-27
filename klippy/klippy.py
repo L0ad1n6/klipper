@@ -8,10 +8,10 @@ import sys, os, gc, optparse, logging, time, collections, importlib
 import util, reactor, queuelogger, msgproto
 import gcode, configfile, pins, mcu, toolhead, webhooks
 
-message_ready = "Printer is ready"
+message_ready = "Tachyon is ready"
 
 message_startup = """
-Printer is not ready
+Tachyon is not ready
 The klippy host software is attempting to connect.  Please
 retry in a few moments.
 """
