@@ -188,7 +188,7 @@ class Homing:
         self.printer.send_event("homing:home_rails_begin", self, rails)
         # Alter kinematics class to think printer is at forcepos
         force_axes = [axis for axis in range(3) if forcepos[axis] is not None]
-        homing_axes = "".join(["xyz"[i] for i in force_axes])
+        homing_axes = "".join(["xyuvz"[i] for i in force_axes])
         startpos = self._fill_coord(forcepos)
         homepos = self._fill_coord(movepos)
         self.toolhead.set_position(startpos, homing_axes=homing_axes)

@@ -23,17 +23,15 @@ class TachyonKinematics:
         for s in self.rails[2].get_steppers():
             self.rails[3].get_endstops()[0][0].add_stepper(s)
 
-        # Pair kinematics with the appropriate steppers
-        self.rails[0].setup_itersolve('tachyon_stepper_alloc', b'+') # main gantry + stepper
-        self.rails[1].setup_itersolve('tachyon_stepper_alloc', b'-') # main gantry - stepper
-        self.rails[2].setup_itersolve('tachyon_stepper_alloc', b'x') # stabilization gantry * stepper
-        self.rails[3].setup_itersolve('tachyon_stepper_alloc', b'y') # stabilization gantry / stepper
+        self.rails[0].setup_itersolve('corexy_stepper_alloc', b'+') # main gantry + stepper
+        self.rails[1].setup_itersolve('corexy_stepper_alloc', b'-') # main gantry - stepper
+        self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'x') # stabilization gantry * stepper
+        self.rails[3].setup_itersolve('cartesian_stepper_alloc', b'y') # stabilization gantry / stepper
         self.rails[4].setup_itersolve('cartesian_stepper_alloc', b'z') # z stepper
 
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-
 
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
@@ -50,13 +48,13 @@ class TachyonKinematics:
             above=0., maxval=max_accel
         )
 
-        self.limits = [(1.0, -1.0)] * 3
+        self.limits = [(1.0, -1.0)] * 5
         ranges = [r.get_range() for r in self.rails]
-        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
-        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
+        self.axes_min = toolhead.Coord(*[r[0] for r in ranges[:3]], e=0.)
+        self.axes_max = toolhead.Coord(*[r[1] for r in ranges[:3]], e=0.)
 
     def get_steppers(self):
-        return [stepper for rail in self.rails for stepper in rail.get_steppers()]
+        return [s for rail in self.rails for s in rail.get_steppers()]
     
     def calc_position(self, stepper_positions):
         pos = [stepper_positions[rail.get_name()] for rail in self.rails]
@@ -64,9 +62,15 @@ class TachyonKinematics:
     
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
+            if "xyuvz"[i] in "uv" and ("x" in homing_axes or "y" in homing_axes):
+                # Skip setting U and V if X or Y are being homed
+                # TODO: Test to see if this is sufficient, if not this can be solved in macro in printer.cfg?
+                continue
+            
             rail.set_position(newpos)
             if "xyuvz"[i] in homing_axes:
                 self.limits[i] = rail.get_range()
+            
     
     def clear_homing_state(self, clear_axes):
         for axis, axis_name in enumerate("xyuvz"):
@@ -76,7 +80,7 @@ class TachyonKinematics:
     def _home_axis(self, homing_state, axis, rail):
         position_min, position_max = rail.get_range()
         hi = rail.get_homing_info()
-        homepos = [None, None, None, None]
+        homepos = [None, None, None, None, None, None] # Added 2 axes, this could cause error TODO: test this
         homepos[axis] = hi.position_endstop
         forcepos = list(homepos)
         if hi.positive_dir:
